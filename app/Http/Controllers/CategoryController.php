@@ -52,9 +52,3 @@ class CategoryController extends Controller{
     }
 
 }
-git init
-git remote add origin https://github.com/Mayaz-Hkm/consulting-laravel-backend.git
-git branch -M main
-git add .
-git commit -m "Initial commit for backend"
-git push -u origin main
