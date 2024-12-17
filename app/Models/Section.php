@@ -7,7 +7,6 @@ class Section extends Model
 {
 protected $fillable = ['sectionName', 'category_id'];
 
-// العلاقة: التخصص ينتمي إلى تصنيف
 public function category()
 {
 return $this->belongsTo(Category::class);

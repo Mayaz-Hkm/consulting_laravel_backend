@@ -19,16 +19,20 @@ return new class extends Migration
                 $table->string('userName');
                 $table->string('mobile' , 10);
                 $table->string('imagePath')->nullable();
+                $table->unsignedBigInteger('category_id');
                 $table->unsignedBigInteger('section_id');
-                $table->string('expertDescription');
-                //$table->float('hourPrice');
+                $table->text('experience');
                 $table->float('rate')->default(0);
                 $table->string('email')->unique();
                 $table->string('timezone');
+                $table->time('start_time');
+                $table->time('end_time');
                 $table->timestamp('email_verified_at')->nullable();
                 $table->string('password');
                 $table->rememberToken();
-                $table->foreign('section_id')->references('id')->on('sections')->onDelete('cascade');
+            $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
+
+            $table->foreign('section_id')->references('id')->on('sections')->onDelete('cascade');
 
                 $table->timestamps();
 

@@ -2,63 +2,58 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Expert;
 use App\Models\User;
+use App\Models\Section;
+use App\Models\ExpertSchedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function register(){
-        if (request('isExpert')){
+    // Register Function
+    public function register()
+    {
+        if (request('isExpert')) {
             return $this->registerExpert();
-        }
-        else{
+        } else {
             return $this->registerClient();
         }
-
     }
 
+    // Expert Registration
     public function registerExpert()
     {
         $validated = $this->validateExpertRegistration();
-        //creating expert instance and assigning its password
+
+        // Creating expert instance and assigning its password
         $expert = Expert::create($validated);
         $expert->password = Hash::make($validated['password']);
         $expert->save();
 
-        //looping for adding expert's experience and schedule
-        if (request('experience')) {
-            //  $experiences = json_decode(\request('experience') , true);
-            $experiences = \request('experience');
-            foreach ($experiences as $experience) {
-                $expert->experiences()->create([
-                    'experienceName' => $experience['experienceName'],
-                    'experienceBody' => $experience['experienceBody']
-                ]);
-            }
-        }
+        // Getting the selected working days and working hours
+        $workingDays = request('working_days'); // Array of selected days
+        $start_time = request('start_time');
+        $end_time = request('end_time');
 
-        //$schedules = json_decode(\request('schedule') , true);
-        $schedules = \request('schedule');
-        foreach ($schedules as $schedule) {
+        // Add schedule for each selected day
+        foreach ($workingDays as $day) {
             $expert->schedules()->create([
-                'isAvailable' => $schedule['isAvailable'],
-                'day' => $schedule['day'],
-                'start' => $schedule['start'],
-                'end' => $schedule['end'],
+                'day' => $day,
+                'start' => $start_time,
+                'end' => $end_time,
             ]);
         }
 
-
-        $expert->wallet()->create();
         return response()->json([
             'status' => 1,
-            'message' => 'Registration successful',
+            'message' => 'Expert registration successful',
         ]);
     }
 
+    // Client Registration
     public function registerClient()
     {
         $validated = $this->validateClientRegistration();
@@ -67,60 +62,59 @@ class AuthController extends Controller
         $user->password = Hash::make($validated['password']);
         $user->save();
 
-        $user->wallet()->create();
-
+        // Creating wallet for client
+        //$user->wallet()->create();
 
         return response()->json([
             'status' => 1,
-            'message' => 'Registered successfully',
+            'message' => 'Client registered successfully',
         ]);
     }
 
+    // Login Function
     public function login()
     {
         $credentials = request()->validate([
-            'email' => ['required' , 'email'],
-            'password' => ['required','min:8'],
+            'email' => ['required', 'email'],
+            'password' => ['required', 'min:8'],
         ]);
 
-        if (\request('isExpert')){
+        if (request('isExpert')) {
             return $this->loginExpert($credentials);
-        }
-        else {
+        } else {
             return $this->loginClient($credentials);
         }
     }
 
-
-
-
+    // Expert Login
     public function loginExpert($credentials)
     {
         if (!Auth::guard('experts')->attempt($credentials)) {
             return response()->json([
                 'status' => 0,
-                'message' => 'Unauthorized'
+                'message' => 'Unauthorized',
             ]);
-
         }
+
         $user = Auth::guard('experts')->user();
-        $user ->tokens()->delete();
+        $user->tokens()->delete();
         $token = $user->createToken('auth_token')->plainTextToken;
+
         return response()->json([
             'status' => 1,
-            'message' => 'Login successfully',
+            'message' => 'Expert login successful',
             'isExpert' => 1,
             'token' => $token,
-
         ]);
     }
 
+    // Client Login
     public function loginClient($credentials)
     {
         if (!Auth::attempt($credentials)) {
             return response()->json([
                 'status' => 0,
-                'message' =>  'Invalid Credentials  معلومات الدخول خاطئة'
+                'message' => 'Invalid credentials',
             ]);
         }
 
@@ -128,66 +122,78 @@ class AuthController extends Controller
         $user->tokens()->delete();
         $token = $user->createToken('auth_token')->plainTextToken;
 
-
         return response()->json([
             'status' => 1,
-            'message' => 'User Logged In Successfully تم تسجيل الدخول بنجاح',
+            'message' => 'Client login successful',
             'isExpert' => 0,
-            'access_token' => $token
+            'access_token' => $token,
         ]);
-
     }
 
-
-    public function logoutExpert(){
-
-        $expert= request()->user('experts');
-        $expert->tokens()->delete();
-        return response()->json([
-            'status' => 1,
-            'message' => 'Logged out successfully',
-        ]);
-
-    }
-
-    public function logoutClient(){
-        $expert= request()->user('clients');
+    // Logout Expert
+    public function logoutExpert()
+    {
+        $expert = request()->user('experts');
         $expert->tokens()->delete();
         return response()->json([
             'status' => 1,
             'message' => 'Logged out successfully',
         ]);
     }
+
+    // Logout Client
+    public function logoutClient()
+    {
+        $client = request()->user();
+        $client->tokens()->delete();
+        return response()->json([
+            'status' => 1,
+            'message' => 'Logged out successfully',
+        ]);
+    }
+
+    // Validation for Expert Registration
     public function validateExpertRegistration()
     {
         return request()->validate([
-            'userName' => ['required', 'string ', 'max:30'],
-            'email' => ['required', 'email', 'unique:users' , 'unique:experts'],
-            'mobile' => ['required', 'string' , 'max:13'],
-            'timezone' => ['required' , 'string' , 'timezone'],
+            'userName' => ['required', 'string', 'max:30'],
+            'email' => ['required', 'email', 'unique:users', 'unique:experts'],
+            'mobile' => ['required', 'string', 'max:10'],
+            'timezone' => ['required', 'string', 'timezone'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'workType_id' => ['required' , 'exists:workType,id'],
-            'section_id' => ['required' , 'exists:sections,id'],
-            //'hourPrice' => ['required' , 'string'],
-            'expertDescription' => ['required' , 'string'],
-            //'experience' => ['string'],
-            //'experience.experienceBody' => ['string'],
-            //'schedules.isAvailable' => ['boolean'],
-            'schedules.day' => ['string' , 'in:Sat,Sun,Mon,Tue,Wed,Thu,Fri'],
-            'schedules.start' => ['time'],
-            'schedules.end' => ['time' , 'after:schedule.start'],
+            'category_id' => ['required', 'exists:categories,id'],
+            'section_id' => ['required', 'exists:sections,id'],
+            'experience' => ['nullable', 'string', 'max:500'],
+            'working_days' => ['required', 'array'], // Array of days
+            'working_days.*' => ['required', 'string', 'in:Mon,Tue,Wed,Thu,Fri,Sat,Sun'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
         ]);
-
     }
 
+    // Validation for Client Registration
     public function validateClientRegistration()
     {
         return request()->validate([
-            'userName' => ['required', 'string ', 'max:30'],
-            'email' => ['required', 'email', 'unique:users' , 'unique:experts'],
-            'mobile' => ['string' , 'max:13'],
-            'timezone' => ['required' , 'string' , 'timezone'],
+            'userName' => ['required', 'string', 'max:30'],
+            'email' => ['required', 'email', 'unique:users', 'unique:experts'],
+            'mobile' => ['string', 'max:13'],
+            'timezone' => ['required', 'string', 'timezone'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            ]);
+        ]);
+    }
+
+    // Fetch Work Types
+    public function getCategories()
+    {
+        $categories = Category::all(['id', 'CategoryName']);
+        return response()->json($categories);
+    }
+
+    // Fetch Sections
+    public function getSections()
+    {
+        $sections = Section::all(['id', 'sectionName']);
+        return response()->json($sections);
     }
 }

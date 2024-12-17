@@ -5,6 +5,7 @@ use App\Http\Controllers\CategoryController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -18,6 +19,15 @@ use Illuminate\Support\Facades\Route;
 Route::post('register' , [AuthController::class , 'register']);
 Route::post('login' , [AuthController::class , 'login']);
 Route::post('logout' , [AuthController::class , 'logout'])->middleware(['auth:sanctum']);
+
+// راوت لجلب التصنيفات مع الأقسام الفرعية
+Route::get('/categories', [CategoryController::class, 'getCategoriesWithSections']);
+
+// راوت لعرض قسم معين بناءً على المعرف
+Route::get('/categories/{id}', [CategoryController::class, 'showCategory']);
+
+// راوت للبحث عن الخبراء بناءً على التقييم
+Route::get('/categories/{categoryId}/experts/searchByRating', [CategoryController::class, 'searchExpertsByRating']);
 
 Route::get('/categories-with-sections', [CategoryController::class, 'getCategoriesWithSections']);
 
