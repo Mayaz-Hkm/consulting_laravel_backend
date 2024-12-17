@@ -31,6 +31,10 @@ Route::get('/categories/{categoryId}/experts/searchByRating', [CategoryControlle
 
 Route::get('/categories-with-sections', [CategoryController::class, 'getCategoriesWithSections']);
 
+Route::get('/get-all-categories', [CategoryController::class, 'getCategories']);
+
+Route::get('/get-all-sections/{category_id}', [CategoryController::class, 'getSections']);
+
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 

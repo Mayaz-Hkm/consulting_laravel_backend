@@ -24,6 +24,11 @@ return new class extends Migration
         \App\Models\Category::find(1)->sections()->create(['sectionName' => 'Java']);
         \App\Models\Category::find(1)->sections()->create(['sectionName' => 'JavaScript']);
 
+        \App\Models\Category::find(2)->sections()->create(['sectionName' => 'nurse']);
+        \App\Models\Category::find(2)->sections()->create(['sectionName' => 'dentist']);
+        \App\Models\Category::find(2)->sections()->create(['sectionName' => 'general doctor']);
+
+
     }
 
     /**

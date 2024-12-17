@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Expert;
+use App\Models\Section;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
@@ -81,4 +82,35 @@ class CategoryController extends Controller
             'data' => $experts
         ]);
     }
+
+    // Fetch categories
+    public function getCategories()
+    {
+        $categories = Category::all(['id', 'CategoryName']);
+        return response()->json($categories);
+    }
+
+    // Fetch Sections
+
+
+     public function getSections($category_id)
+     {
+         // التأكد من أن الـ category_id موجود
+         if (!$category_id) {
+             return response()->json(['error' => 'Category ID is required'], 400);
+         }
+
+         // جلب الأقسام المرتبطة بالـ category_id
+         $sections = Section::where('category_id', $category_id)
+             ->get(['id', 'sectionName']);
+
+         // التحقق إذا لم يتم العثور على بيانات
+         if ($sections->isEmpty()) {
+             return response()->json(['message' => 'No sections found for this category.'], 404);
+         }
+
+         // إرجاع البيانات كـ JSON
+         return response()->json($sections);
+     }
+
 }

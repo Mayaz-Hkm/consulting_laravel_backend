@@ -183,17 +183,4 @@ class AuthController extends Controller
         ]);
     }
 
-    // Fetch Work Types
-    public function getCategories()
-    {
-        $categories = Category::all(['id', 'CategoryName']);
-        return response()->json($categories);
-    }
-
-    // Fetch Sections
-    public function getSections()
-    {
-        $sections = Section::all(['id', 'sectionName']);
-        return response()->json($sections);
-    }
 }
