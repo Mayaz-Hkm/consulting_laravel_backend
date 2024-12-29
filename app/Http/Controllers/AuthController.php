@@ -74,6 +74,8 @@ class AuthController extends Controller
     // Login Function
     public function login()
     {
+        \Log::info('isExpert value: ' . request('isExpert')); // تتبع قيمة isExpert
+
         $credentials = request()->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'min:8'],
@@ -89,6 +91,7 @@ class AuthController extends Controller
     // Expert Login
     public function loginExpert($credentials)
     {
+        \Log::info('Attempting expert login with: ' . json_encode($credentials)); // تتبع بيانات تسجيل
         if (!Auth::guard('experts')->attempt($credentials)) {
             return response()->json([
                 'status' => 0,
@@ -106,6 +109,7 @@ class AuthController extends Controller
             'isExpert' => 1,
             'token' => $token,
         ]);
+
     }
 
     // Client Login
@@ -128,6 +132,15 @@ class AuthController extends Controller
             'isExpert' => 0,
             'access_token' => $token,
         ]);
+    }
+
+    public function logout(){
+        if (Auth::user() instanceof App\Models\Expert){
+            return $this->logoutExpert();
+        }
+        else{
+            return $this->logoutClient();
+        }
     }
 
     // Logout Expert
